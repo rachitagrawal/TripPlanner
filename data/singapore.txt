@@ -1,0 +1,9 @@
+Place,StartTime,EndTime,Rating,MinReqTime
+Gardens by the bay,1000,1800,4.6,5
+Universal Studios,1000,1800,4.6,8
+S.E.A Aquarium,1000,1900,4.6,1
+Singapore Zoo,0830,1800,4.6,3
+Skyline Luge,1000,2130,4.6,0.33
+Singapore Cable Car,0845,2130,4.6,0.5
+Singapore Night Safari,1930,2400,4.2,1
+Singapore River Safari,1000,1900,4.3,2
