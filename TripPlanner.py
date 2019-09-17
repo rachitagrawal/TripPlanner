@@ -30,24 +30,21 @@ def find_best_itinerary(attractions, slot):
     while attractions.shape[0] > 0:
         #1. Pick the attraction with earliest finish time
         attractions = filter_attractions(attractions, start_time, end_time)
-        #print("********************************************")
-        #print(attractions)
-        #print("********************************************")
+
         #2. Remove x, and all intervals intersecting x, from the set of candidate intervals
         row = attractions.iloc[0]
         new_start_time = get_updated_time(row['StartTime'],row['MinReqTime'])
         entry = {'Place':row['Place'], 'StartTime':row['StartTime'], 'EndTime':new_start_time}
-        #print("Entry:", entry)
         itinerary.loc[len(itinerary)] = entry
-        #print("itinearary:", itinerary)
         attractions = attractions.drop(attractions.index[0])
-        #print("attractions:", attractions)
-        #4. Update the start time
+
+        #3. Update the start time
         start_time = new_start_time
-        #3. Repeat until the set of candidate interval is empty
+
+        #4. Repeat until the set of candidate interval is empty
         attractions = attractions.reset_index(drop=True)
 
-    print("#############################################")
+    print("#################",slot['Date'],"##################")
     print(itinerary)
     print("#############################################")
     return itinerary
@@ -63,6 +60,7 @@ def filter_attractions(attractions, start_time, end_time):
 
         if(delta_time.seconds/60 >= place['MinReqTime']):
             place['StartTime'] = max(place['StartTime'], start_time)
+            place['EndTime'] = min(place['EndTime'], end_time)
             filtered_df.loc[poss_ind] = place
             poss_ind += 1
 
@@ -72,40 +70,11 @@ def filter_attractions(attractions, start_time, end_time):
 
     return filtered_df
 
-def get_possible_attractions(attractions, slot):
-    print("Attractions possible in the slot:", slot['Date'])
-    poss_df = pd.DataFrame(columns=attractions.columns)
-    #print(poss_df)
-    poss_ind = 0
-
-    for index, row in attractions.iterrows():
-        delta_time = int_to_time(min(slot['EndTime'], row['EndTime'])) - int_to_time(max(slot['StartTime'], row['StartTime']))
-
-        #print("==================================================")
-        #print("Attraction:", row['Place'], " Delta:", delta_time)
-        #print("==================================================")
-
-        if(delta_time.seconds/60 >= row['MinReqTime']):
-            row['StartTime'] = max(slot['StartTime'], row['StartTime'])
-            row['EndTime'] = min(slot['EndTime'], row['EndTime'])
-            poss_df.loc[poss_ind] = row
-            poss_ind += 1
-            #print(row)
-
-    #Sort the attractions by decreasing order of 'Rating' and increasing order of 'FinishTime'
-    poss_df.sort_values(by='Rating', ascending=False, inplace=True)
-    poss_df.sort_values(by='EndTime', ascending=True, inplace=True)
-    #print("############################################")
-    #print(poss_df)
-    #print("############################################")
-
-    return poss_df
-
 def get_possible_slots(attractions, free_slots):
 
     for index, row in free_slots.head().iterrows():
         #print(index, row['Date'], row['StartTime'], row['EndTime'])
-        filtered_attractions = get_possible_attractions(attractions, row)
+        filtered_attractions = filter_attractions(attractions, row['StartTime'], row['EndTime'])
         itinerary = find_best_itinerary(filtered_attractions, row)
 
         cond = attractions['Place'].isin(itinerary['Place']) == True
@@ -125,8 +94,5 @@ if __name__ == "__main__":
 
     attractions = pd.read_csv(args.destination)
     free_slots = pd.read_csv(args.availability)
-
-    #print(attractions)
-    #print(free_slots)
 
     get_possible_slots(attractions, free_slots)
